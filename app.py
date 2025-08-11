@@ -14,18 +14,15 @@ warnings.filterwarnings("ignore")
 # @st.cache_resource akan menyimpan data ini sehingga tidak diunduh berulang kali.
 @st.cache_resource
 def download_nltk_data():
-    """Mengecek dan mengunduh paket data NLTK yang diperlukan."""
-    try:
-        # Cek paket utama 'punkt'
-        nltk.data.find('tokenizers/punkt')
-    except LookupError: # <-- PERBAIKAN: Menggunakan exception yang benar
-        nltk.download('punkt')
-    
-    try:
-        # Cek paket 'stopwords'
-        nltk.data.find('corpora/stopwords')
-    except LookupError: # <-- PERBAIKAN: Menggunakan exception yang benar
-        nltk.download('stopwords')
+    """Mengecek dan mengunduh semua paket data NLTK yang diperlukan."""
+    # Daftar paket yang dibutuhkan
+    required_packages = ['punkt', 'punkt_tab', 'stopwords']
+    for package in required_packages:
+        try:
+            nltk.data.find(f'tokenizers/{package}' if 'punkt' in package else f'corpora/{package}')
+        except LookupError:
+            st.info(f"Mengunduh paket NLTK: {package}...")
+            nltk.download(package)
 
 # Panggil fungsi untuk mengunduh data saat aplikasi pertama kali dimuat
 download_nltk_data()
