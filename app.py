@@ -8,6 +8,9 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 import warnings
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
 
 warnings.filterwarnings("ignore")
 
