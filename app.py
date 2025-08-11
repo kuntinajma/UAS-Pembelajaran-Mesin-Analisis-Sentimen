@@ -1,21 +1,20 @@
 import streamlit as st
 import pickle
-import re
 import json
 import numpy as np
-import nltk # Ditambahkan
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 import warnings
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
 
 warnings.filterwarnings("ignore")
 
-# --- Improvisasi: Fungsi untuk mengunduh data NLTK ---
-# Ini akan memastikan data yang diperlukan selalu tersedia.
+# --- Bagian 1: Mengunduh Data NLTK ---
+# Fungsi ini memastikan data yang diperlukan NLTK (untuk tokenisasi dan stopwords)
+# sudah terunduh di lingkungan server Streamlit Cloud.
+# @st.cache_resource akan menyimpan data ini sehingga tidak diunduh berulang kali.
+@st.cache_resource
 def download_nltk_data():
     try:
         nltk.data.find('tokenizers/punkt')
@@ -26,16 +25,16 @@ def download_nltk_data():
     except nltk.downloader.DownloadError:
         nltk.download('stopwords')
 
-# Panggil fungsi download saat aplikasi dimulai
+# Panggil fungsi untuk mengunduh data saat aplikasi pertama kali dimuat
 download_nltk_data()
 
 
-# --- Fungsi Caching untuk Memuat Model dan Artefak ---
-# Caching memastikan model hanya dimuat sekali saat aplikasi pertama kali dijalankan.
+# --- Bagian 2: Memuat Model dan Artefak Lain ---
+# @st.cache_resource digunakan agar model dan file lainnya hanya dimuat sekali,
+# sehingga aplikasi berjalan lebih cepat setelah pemuatan pertama.
 @st.cache_resource
 def load_artifacts():
-    """Memuat model, vectorizer, dan feature selector dari file."""
-    # --- PERBAIKAN: Mengubah path file menjadi relatif terhadap direktori utama ---
+    """Memuat model, vectorizer, feature selector, dan kamus slang dari file."""
     with open("Models/best_ensemble_model.pkl", "rb") as f:
         model = pickle.load(f)
     with open("Models/tfidf_vectorizer.pkl", "rb") as f:
@@ -44,30 +43,42 @@ def load_artifacts():
         selector = pickle.load(f)
     with open('Datasets/slangwords.json', 'r') as file:
         slang_dict = json.load(file)
-    return model, vectorizer, selector, slang_dict
-
-# --- Fungsi Tunggal untuk Preprocessing Teks ---
-def preprocess_text(text, slang_dict):
-    """Membersihkan dan memproses satu teks input."""
-    stop_words = set(stopwords.words('indonesian'))
+    
+    # Membuat stemmer dan daftar stopwords juga di-cache di sini
     stemmer = StemmerFactory().create_stemmer()
+    stop_words = set(stopwords.words('indonesian'))
+    
+    return model, vectorizer, selector, slang_dict, stemmer, stop_words
 
-    text = text.lower() # Case folding
-    words = text.split()
-    normalized_words = [slang_dict.get(word, word) for word in words] # Normalisasi slang
-    text = ' '.join(normalized_words)
-    words = word_tokenize(text)
-    filtered_words = [word for word in words if word.isalnum() and word not in stop_words] # Hapus stopwords
-    text = ' '.join(filtered_words)
-    text = stemmer.stem(text) # Stemming
+# Memuat semua artefak yang diperlukan
+model, vectorizer, selector, slang_dict, stemmer, stop_words = load_artifacts()
+
+
+# --- Bagian 3: Fungsi Preprocessing Teks ---
+# Fungsi ini sekarang lebih ringkas dan efisien.
+def preprocess_text(text, slang_dict, stemmer, stop_words):
+    """Membersihkan dan memproses satu teks input dari pengguna."""
+    text = text.lower() # 1. Case folding
+    words = word_tokenize(text) # 2. Tokenisasi
+    
+    # 3. Normalisasi, Filtering, dan Hapus Stopwords dalam satu langkah
+    processed_words = []
+    for word in words:
+        # Hanya proses kata yang alfanumerik
+        if word.isalnum():
+            # Normalisasi kata slang
+            normalized_word = slang_dict.get(word, word)
+            # Cek apakah kata bukan stopword setelah dinormalisasi
+            if normalized_word not in stop_words:
+                processed_words.append(normalized_word)
+                
+    text = ' '.join(processed_words) # Gabungkan kembali kata-kata yang sudah bersih
+    text = stemmer.stem(text) # 4. Stemming
     return text
 
-# --- Memuat Artefak ---
-model, vectorizer, selector, slang_dict = load_artifacts()
-
-# --- Antarmuka Pengguna (UI) Streamlit ---
+# --- Bagian 4: Antarmuka Pengguna (UI) Streamlit ---
 st.set_page_config(page_title="Analisis Sentimen Ulasan", layout="wide")
-st.title("Aplikasi Analisis Sentimen Ulasan")
+st.title("📱 Aplikasi Analisis Sentimen Ulasan")
 st.write("Masukkan teks ulasan (dalam Bahasa Indonesia) di bawah ini untuk memprediksi sentimennya (Positif atau Negatif).")
 
 # Input teks dari pengguna
@@ -77,9 +88,9 @@ user_input = st.text_area("Teks Ulasan:", "Aplikasinya sangat membantu dan mudah
 if st.button("Analisis Sentimen"):
     if user_input:
         # Tampilkan spinner saat sedang memproses
-        with st.spinner('Sedang menganalisis...'):
+        with st.spinner('Sedang menganalisis... 🧐'):
             # 1. Preprocessing teks input
-            cleaned_text = preprocess_text(user_input, slang_dict)
+            cleaned_text = preprocess_text(user_input, slang_dict, stemmer, stop_words)
 
             # 2. Transformasi teks menggunakan TF-IDF dan Feature Selector
             text_tfidf = vectorizer.transform([cleaned_text])
@@ -92,14 +103,13 @@ if st.button("Analisis Sentimen"):
             # 4. Tampilkan hasil
             st.subheader("Hasil Analisis:")
             
-            # Konversi label numerik ke string
             label_map = {0: "NEGATIF", 1: "POSITIF"}
             result = label_map[prediction[0]]
             
             if result == "POSITIF":
-                st.success(f"**Sentimen: {result}**")
+                st.success(f"**Sentimen: {result}** 👍")
             else:
-                st.error(f"**Sentimen: {result}**")
+                st.error(f"**Sentimen: {result}** 👎")
 
             # Tampilkan skor probabilitas
             st.write("Skor Kepercayaan:")
