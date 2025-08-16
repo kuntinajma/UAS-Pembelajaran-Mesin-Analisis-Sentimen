@@ -34,6 +34,7 @@ Model yang telah dilatih kemudian diimplementasikan ke dalam sebuah aplikasi web
 -   **`/Notebooks`**: Kumpulan Jupyter Notebook untuk setiap tahap, mulai dari scraping, analisis, hingga uji coba model.  
 -   **`app.py`**: File utama untuk menjalankan aplikasi web Streamlit.  
 -   **`requirements.txt`**: Daftar library Python yang dibutuhkan untuk menjalankan proyek.  
+-   **`README.md`**: Penjelasan singkat terkait proyek.  
 
 ---
 
