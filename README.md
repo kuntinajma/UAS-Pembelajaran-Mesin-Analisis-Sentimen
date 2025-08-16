@@ -13,21 +13,21 @@ Model yang telah dilatih kemudian diimplementasikan ke dalam sebuah aplikasi web
 
 ## 📂 Struktur Folder Proyek
 
-/
-├── Datasets/
-│ ├── grab_reviews.csv
-│ └── slangwords.json
-├── Models/
-│ ├── best_ensemble_model.pkl
-│ ├── feature_selector.pkl
-│ └── tfidf_vectorizer.pkl
-├── Notebooks/
-│ ├── analisis_sentimen_grab.ipynb
-│ ├── inference.ipynb
-│ └── scraping.ipynb
-├── app.py
-├── requirements.txt
-└── README.md
+    UAS/
+    ├── Datasets/
+    │ ├── grab_reviews.csv
+    │ └── slangwords.json
+    ├── Models/
+    │ ├── best_ensemble_model.pkl
+    │ ├── feature_selector.pkl
+    │ └── tfidf_vectorizer.pkl
+    ├── Notebooks/
+    │ ├── analisis_sentimen_grab.ipynb
+    │ ├── inference.ipynb
+    │ └── scraping.ipynb
+    ├── app.py
+    ├── requirements.txt
+    └── README.md
 
 -   **`/Datasets`**: Berisi data mentah ulasan dan kamus kata-kata slang.  
 -   **`/Models`**: Menyimpan model machine learning, vectorizer, dan feature selector yang telah dilatih.  
