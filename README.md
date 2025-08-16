@@ -13,7 +13,6 @@ Model yang telah dilatih kemudian diimplementasikan ke dalam sebuah aplikasi web
 
 ## 📂 Struktur Folder Proyek
 
-.
 ├── Datasets
 │ ├── grab_reviews.csv
 │ └── slangwords.json
